@@ -13,6 +13,7 @@ When you issue `make` TianoCore EDK II and LiBoot will both be built.
 4. GCC-C++ (aka g++) 4.8 or newer
 5. libuuid-devel
 6. ACPI Source Language Compiler/Decompiler (iasl)
+7. Python 2
 
 **LiBoot Dependencies**
 
