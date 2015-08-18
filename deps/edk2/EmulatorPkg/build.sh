@@ -108,6 +108,13 @@ case `uname` in
       4.9.*|4.1[0-9].*)
         TARGET_TOOLS=GCC49
         ;;
+	
+	  # I'm currently using GCC 5.1.1, which isn't supported by TianoCore EDK II.
+	  # So this just sets the toolset to GCC 4.9 - and everything works just fine.
+
+	  5.*)
+		TARGET_TOOLS=GCC48
+		;;
       *)
         TARGET_TOOLS=GCC44
         ;;

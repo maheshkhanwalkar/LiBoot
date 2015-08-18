@@ -254,10 +254,13 @@
   # Bios Thunk
   DuetPkg/BiosVideoThunkDxe/BiosVideo.inf
 
+  # LiBoot Application
+  LiBoot/LiBoot.inf
+
   #
   # Sample Application
   #
-  MdeModulePkg/Application/HelloWorld/HelloWorld.inf
+  # MdeModulePkg/Application/HelloWorld/HelloWorld.inf
 
 ###################################################################################################
 #
