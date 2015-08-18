@@ -17,7 +17,7 @@ When you issue `make` TianoCore EDK II and LiBoot will both be built.
 **LiBoot Dependencies**
 1. GCC 4.8 or newer (1)
 2. GNU Make
-
+3. QEMU
 
 
 
