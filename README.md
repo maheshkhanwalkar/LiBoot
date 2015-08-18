@@ -7,18 +7,17 @@ When you issue `make` TianoCore EDK II and LiBoot will both be built.
 
 **TianoCore EDK II Dependencies:**
 
-1. GCC 4.8 or newer (1)
+1. GCC 4.8 or newer
 2. GNU Make
 3. NASM
-4. GCC-C++ (aka g++) 4.8 or newer (1)
+4. GCC-C++ (aka g++) 4.8 or newer
 5. libuuid-devel
 6. ACPI Source Language Compiler/Decompiler (iasl)
 
 **LiBoot Dependencies**
-1. GCC 4.8 or newer (1)
+
+1. GCC 4.8 or newer
 2. GNU Make
 3. QEMU
 
 
-
-(1) This can be changed to older GCC versions (though I haven't tested it)
