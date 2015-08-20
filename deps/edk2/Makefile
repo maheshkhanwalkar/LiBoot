@@ -6,8 +6,8 @@
 # just like the rest of LiBoot.
 
 all:
-	if test -f STOP.txt; then source ./edksetup.sh BaseTools && build -a X64 -p DuetPkg/DuetPkgX64.dsc; \
-	else $(MAKE) -C BaseTools;  source ./edksetup.sh BaseTools && sed -i 's/Nt32Pkg/MdeModulePkg/g' Conf/target.txt && sed -i 's/MYTOOLS/GCC48/g' Conf/target.txt && sed -i 's/IA32/X64/g' Conf/target.txt && sed -i 's/MAX_CONCURRENT_THREAD_NUMBER = 1/MAX_CONCURRENT_THREAD_NUMBER = 4/g' Conf/target.txt && build; echo "STOP" > STOP.txt; fi
+	if test -f no_build.txt; then source ./edksetup.sh BaseTools && build -a X64 -p DuetPkg/DuetPkgX64.dsc; \
+	else $(MAKE) -C BaseTools;  source ./edksetup.sh BaseTools && sed -i 's/Nt32Pkg/MdeModulePkg/g' Conf/target.txt && sed -i 's/MYTOOLS/GCC48/g' Conf/target.txt && sed -i 's/IA32/X64/g' Conf/target.txt && sed -i 's/MAX_CONCURRENT_THREAD_NUMBER = 1/MAX_CONCURRENT_THREAD_NUMBER = 4/g' Conf/target.txt && build; echo "NO_REBUILD" > no_build.txt; fi
 
 clean: 
 	source ./edksetup.sh BaseTools && build clean
@@ -15,4 +15,4 @@ clean:
 	source ./edksetup.sh BaseTools && build -a X64 -p OvmfPkg/OvmfPkgX64.dsc clean
 	$(MAKE) -C BaseTools clean
 	rm -rf BuildEnv.sh build_rule.txt target.txt tools_def.txt
-	rm -rf STOP.txt
+	rm -rf no_build.txt
