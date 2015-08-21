@@ -104,33 +104,6 @@ EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 		}
 	}	
 
-	//boot->LocateHandleBuffer(ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &NumberFileSystemHandles, &FileSystemHandles); 
-
-
-	//Print(L"\nPreparing to load Linux (currently using hard-coded path)\n");
-	//Print(L"Loading 'vmlinuz.efi'....\n\n");
-
-	//EFI_DEVICE_PATH_PROTOCOL* path = FileDevicePath(image_handle, L"vmlinuz.efi");
-
-	//status = ShellFileExists(L"\\vmlinux.efi");
-	//Print(L"\nFile Exists? %r \n\n", status);
-
-
-	//EFI_HANDLE linux_handle;
-	//EFI_STATUS result = boot->LoadImage(FALSE, image_handle, path, NULL, 0, &linux_handle);
-	
-	/*if(result == EFI_SUCCESS)
-	{
-		Print(L"Successfully loaded 'vmlinux.efi' into memory!\n");
-		Print(L"Starting Linux Kernel....\n\n");
-
-		boot->StartImage(linux_handle, NULL, NULL);
-	}
-	else
-	{
-		Print(L"LiBoot encountered an error when trying to load 'vmlinuz.efi'!\n");
-	}*/
-
 	return EFI_SUCCESS;
 }
 
