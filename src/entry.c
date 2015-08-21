@@ -19,21 +19,28 @@ void print_guid(EFI_GUID guid)
 }
 
 
-EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys_table)
+void boot_text(EFI_SYSTEM_TABLE* sys_table)
 {
 	Print(L"LiBoot (U)EFI Bootloader v0.0.1\n\n");
 	Print(L"Probing EFI System Table.....\n\n");
 
 	CHAR16* vendor = sys_table->FirmwareVendor;
-	UINT32 fversion = sys_table->FirmwareRevision;
+	UINT32 fware_rev = sys_table->FirmwareRevision;
 
-	EFI_TABLE_HEADER header = sys_table->Hdr; 
+	EFI_TABLE_HEADER header = sys_table->Hdr;
 	UINT32 uefi_rev = header.Revision;
 
 	Print(L"UEFI Revision: %d.%02d\n\n", uefi_rev >> 16, uefi_rev & 0xFFFF);
 
 	Print(L"Firmware Vendor: %s\n", vendor);
-	Print(L"Firmware Revision: %d.%02d\n\n", fversion >> 16, fversion & 0xFFFF);
+	Print(L"Firmware Revision: %d.%02d\n\n", fware_rev >> 16, fware_rev & 0xFFFF);
+
+}
+
+
+EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys_table)
+{
+	boot_text(sys_table);
 
 	EFI_CONFIGURATION_TABLE* conf = sys_table->ConfigurationTable;
 	UINTN conf_num = sys_table->NumberOfTableEntries; 
