@@ -21,7 +21,9 @@ When you issue `make` TianoCore EDK II and LiBoot will both be built.
 2. GNU Make
 3. QEMU
 
-**WARNING:** The EDK2 Build System will break for systems that have python mapped to python3 
+**WARNING:** 
+
+The EDK2 Build System will break for systems that have python mapped to python3 
 and not python2 (Arch Linux for example). Please adjust symlinks to allow the build to
 complete successfully. 
 
