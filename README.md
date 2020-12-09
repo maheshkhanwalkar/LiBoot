@@ -1,6 +1,10 @@
 # LiBoot
 A Powerful, Easy to Use (U)EFI Bootloader
 
+### Status
+LiBoot is currently still in the early stages of development and therefore **not** feature-complete. However, it is currently capable
+of booting Linux under certain conditions. There will be ongoing work to make the project more robust and functional.
+
 ### Building
 
 Building LiBoot is somewhat complicated, due to its underlying dependency on Tianocore EDK II, which has a particularly
