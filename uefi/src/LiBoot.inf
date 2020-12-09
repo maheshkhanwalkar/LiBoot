@@ -1,0 +1,28 @@
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = LiBoot
+  FILE_GUID                      = f0419715-08d8-4220-9e2e-1f91cc201242
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = uefi_main
+
+[Sources]
+  LiBoot.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  
+[Guids]
+
+[Ppis]
+
+[Protocols]
+
+[FeaturePcd]
+
+[Pcd]
