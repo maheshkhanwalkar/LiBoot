@@ -20,5 +20,7 @@ package, which are required for building.
 #### Building the EFI image
     ./uefi/build.sh
 
-The provided shell script will perform all the configuration magic needed to setup EDK II for building, builds out the OVMF image,
-and builds LiBoot. The final result will be within build/LiBoot.efi, which can be installed to the EFI System Partition (ESP) for use.
+The provided shell script performs **magic** 🪄 to get the out-of-source EDK II build to actually work. The OVMF image (firmware) and LiBoot.efi
+executable are then both built. The OVMF firmware is built for testing with QEMU.
+
+The LiBoot executable is then copied to `build/LiBoot.efi` when the build completes successfully. 
