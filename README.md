@@ -18,4 +18,7 @@ The provided shell script will install the required dependencies (using apt) and
 package, which are required for building.
 
 #### Building the EFI image
-    TODO - build system has not yet been implemented!
+    ./uefi/build.sh
+
+The provided shell script will perform all the configuration magic needed to setup EDK II for building, builds out the OVMF image,
+and builds LiBoot. The final result will be within build/LiBoot.efi, which can be installed to the EFI System Partition (ESP) for use.
