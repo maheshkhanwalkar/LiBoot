@@ -5,29 +5,46 @@ set -e
 
 dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
-function switch_to_script_dir() {
-  cd $dir
+function switch_to_dir() {
+  cd $1
 }
 
 # Switch to the directory where this script resides
-switch_to_script_dir
+switch_to_dir $dir
 
 # Setup EDK II
-source ../edk2/edksetup.sh BaseTools
-cp ../conf/target.txt ../edk2/Conf/
+make -C ../edk2/BaseTools
+switch_to_dir "../edk2/"
+source edksetup.sh BaseTools
+
+switch_to_dir $dir
 cp ../conf/MdeModulePkg.dsc ../edk2/MdeModulePkg/
 cd ../edk2/MdeModulePkg/Application && ln -sfnv ../../../uefi/src LiBoot
 
+# Setup toolchain and architecture
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    ARCH="X64"
+    TOOLCHAIN="GCC5"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    ARCH="X64"
+    TOOLCHAIN="XCODE5"
+else
+    printf "[ERROR] Unknown platform! Quitting...\n"
+    exit 1
+fi
+
 # Build OVMF
-build -p OvmfPkg/OvmfPkgX64.dsc
+echo "${ARCH}"
+echo "$TOOLCHAIN"
+build -a "$ARCH" -t "$TOOLCHAIN" -p OvmfPkg/OvmfPkgX64.dsc
 
 # Build LiBoot
-build
+build -a "$ARCH" -t "$TOOLCHAIN"
 
 # Copy image to sane location
-switch_to_script_dir
+switch_to_dir $dir
 mkdir -p ../build
-cp ../edk2/Build/MdeModule/DEBUG_GCC5/X64/LiBoot.efi ../build/LiBoot.efi
+cp "../edk2/Build/MdeModule/DEBUG_${TOOLCHAIN}/${ARCH}/LiBoot.efi" ../build/LiBoot.efi
 
 # Display output message
-printf "\u001b[32m[SUCCESS]\e[0m LiBoot successfully built!\n"
+printf "[SUCCESS] LiBoot successfully built!\n"
