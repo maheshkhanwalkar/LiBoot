@@ -7,18 +7,23 @@ of booting Linux under certain conditions. There will be ongoing work to make th
 
 ### Building
 
-Building LiBoot is somewhat complicated, due to its underlying dependency on Tianocore EDK II, which has a particularly
+Building LiBoot is somewhat complicated, due to its underlying dependency on [TianoCore EDK II](https://github.com/tianocore/edk2/), which has a particularly
 unusual build system and various dependencies.
 
-The following instructions have been tested on Ubuntu distros, so that should work. File an issue if something is missing
-or builds are breaking. 
+#### Supported Build Platforms
+
+* macOS
+* Ubuntu
+
+The above list only describes the platforms for which LiBoot has been successfully built. It does not indicate the ability for LiBoot to boot those
+operating systems. That functionality has not yet been implemented.
 
 While it is possible to build EDK II on different platforms, we do not directly support it -- you are on your own!
 
 #### Installing dependencies
     ./uefi/install_deps.sh
 
-The provided shell script will install the required dependencies (using apt) and initialise all the git submodules for the edk2
+The provided shell script will install the required dependencies and initialise all the git submodules for the edk2
 package, which are required for building.
 
 #### Building the EFI image
