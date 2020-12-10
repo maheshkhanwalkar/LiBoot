@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fail fast on error
+set -e
+
 dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 
 function switch_to_script_dir() {
@@ -25,3 +28,6 @@ build
 switch_to_script_dir
 mkdir -p ../build
 cp ../edk2/Build/MdeModule/DEBUG_GCC5/X64/LiBoot.efi ../build/LiBoot.efi
+
+# Display output message
+printf "\u001b[32m[SUCCESS]\e[0m LiBoot successfully built!\n"
