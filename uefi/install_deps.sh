@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fail fast on error
+set -e
+
 # When Linux is detected, assume Ubuntu
 # TODO add more specific checks...
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
