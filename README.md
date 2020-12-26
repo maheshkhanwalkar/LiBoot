@@ -1,6 +1,14 @@
 # LiBoot
 A Powerful, Easy to Use (U)EFI Bootloader
 
+### for-inix branch
+
+This branch tracks a customised version of LiBoot capable of booting [Inix](https://github.com/maheshkhanwalkar/Inix). The limited Linux
+boot functionality has been removed completely -- this version can *only* boot Inix.
+
+The eventual goal is to incorporate the Inix boot process into LiBoot proper, so it can be used for the development of the Inix kernel,
+as well as for booting Linux distributions (main use-case)
+
 ### Status
 LiBoot is currently still in the early stages of development and therefore **not** feature-complete. However, it is currently capable
 of booting Linux under certain conditions. There will be ongoing work to make the project more robust and functional.
