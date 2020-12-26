@@ -38,6 +38,9 @@ echo "${ARCH}"
 echo "$TOOLCHAIN"
 build -a "$ARCH" -t "$TOOLCHAIN" -p OvmfPkg/OvmfPkgX64.dsc
 
+# Build ShellPkg
+build -a "$ARCH" -t "$TOOLCHAIN" -p ShellPkg/ShellPkg.dsc
+
 # Build LiBoot
 build -a "$ARCH" -t "$TOOLCHAIN"
 

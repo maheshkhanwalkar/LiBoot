@@ -8,6 +8,8 @@
 #include <Protocol/DevicePath.h>
 
 #include <Protocol/LoadedImage.h>
+#include <Protocol/Shell.h>
+#include <Protocol/SimpleFileSystem.h>
 #include <Library/DevicePathLib.h>
 
 void print_guid(EFI_GUID guid)
@@ -17,6 +19,37 @@ void print_guid(EFI_GUID guid)
 			  guid.Data4[3], guid.Data4[4], guid.Data4[5],
 			     guid.Data4[6], guid.Data4[7]); 	
 }
+
+#define MAX_IMAGE_SIZE 1024*1024*100
+#define PT_LOAD 0x00000001
+
+typedef struct elf64_header {
+	char e_ident[16];
+	unsigned short e_type;
+	unsigned short e_machine;
+	unsigned int e_version;
+	unsigned long e_entry;
+	unsigned long e_phoff;
+	unsigned long e_shoff;
+	unsigned int e_flags;
+	unsigned short e_ehsize;
+	unsigned short e_phentsize;
+	unsigned short e_phnum;
+	unsigned short e_shentsize;
+	unsigned short e_shnum;
+	unsigned short e_shstrndx;
+} elf64_header_t;
+
+typedef struct elf64_pheader {
+	unsigned int p_type;
+	unsigned int p_flags;
+	unsigned long p_offset;
+	unsigned long p_vaddr;
+	unsigned long p_paddr;
+	unsigned long p_filesz;
+	unsigned long p_memsz;
+	unsigned long p_align;
+} elf64_pheader_t;
 
 
 EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys_table)
@@ -52,57 +85,133 @@ EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 	EFI_BOOT_SERVICES* boot = sys_table->BootServices;
 	//EFI_RUNTIME_SERVICES* run_serv = sys_table->RuntimeServices;
 
-	EFI_GUID blockio_guid = BLOCK_IO_PROTOCOL;
-
+	EFI_GUID sfs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 	UINTN fs_num;
 	EFI_HANDLE* fs_handles;
 
-	boot->LocateHandleBuffer(ByProtocol, &blockio_guid, NULL, &fs_num, &fs_handles);
-	
-	Print(L"Number of Block Devices: %u\n", fs_num);	
-	Print(L"Scanning Block Devices....\n\n");
+	boot->LocateHandleBuffer(ByProtocol, &sfs_guid, NULL, &fs_num, &fs_handles);
+	Print(L"Number of FS: %u\n", fs_num);
 
-	EFI_BLOCK_IO* block_io;
-	EFI_GUID vmlinuz_proto = LOADED_IMAGE_PROTOCOL;
+	char* buffer;
+	EFI_STATUS res;
+
+	res = boot->AllocatePool(EfiLoaderData, MAX_IMAGE_SIZE, (void**)(&buffer));
+
+	if(EFI_ERROR(res)) {
+		Print(L"Could not allocate buffer. Not enough memory!\n");
+		return EFI_SUCCESS;
+	}
+
+	Print(L"Allocated the buffer.\n");
 
 	for(int i = 0; i < fs_num; i++) {
-		EFI_STATUS res = boot->HandleProtocol(fs_handles[i], &blockio_guid, (void**)&block_io);
+		EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs = NULL;
+		res = boot->HandleProtocol(fs_handles[i], &sfs_guid, (void**)&fs);
 
-		if(!EFI_ERROR(res)) {
-			//OK, we are good to go...
-			EFI_BLOCK_IO_MEDIA* media = block_io->Media; 
-			if(!media->MediaPresent) {
-				Print(L"DEVICE %x: \n", fs_handles[i]);
-				Print(L"DEVICE NOT PRESENT, SKIPPING \n\n");
-			}
-			else {
-				Print(L"DEVICE %x: \n", fs_handles[i]);
-				Print(L"DEVICE PRESENT \n");
-				Print(L"REMOVABLE MEDIA?  %s\n", media->RemovableMedia ? L"TRUE" : L"FALSE");
-
-				Print(L"Attempting to load 'vmlinuz.efi'.....\n");
-				EFI_DEVICE_PATH_PROTOCOL* vmlinuz_path = FileDevicePath(fs_handles[i], L"\\vmlinuz.efi");
-				
-				EFI_HANDLE vmlinuz;
-				EFI_STATUS stat = boot->LoadImage(FALSE, image_handle, vmlinuz_path, NULL, 0, &vmlinuz);
-
-				if(!EFI_ERROR(stat)) {
-					EFI_LOADED_IMAGE* vmlinuz_boot;
-					stat = boot->HandleProtocol(vmlinuz, &vmlinuz_proto, (void**)&vmlinuz_boot);
-					
-					CHAR16* boot_ops = L"root=/dev/sda2";
-
-					vmlinuz_boot->LoadOptionsSize = 28;
-					vmlinuz_boot->LoadOptions = boot_ops;
-
-					boot->StartImage(vmlinuz, NULL, NULL); 
-				}
-				else {
-					Print(L"Couldn't load 'vmlinuz.efi'. Skipping\n\n");
-				}
-			}
+		if(EFI_ERROR(res)) {
+			continue;
 		}
-	}	
+
+		EFI_FILE_PROTOCOL* root = NULL;
+		res = fs->OpenVolume(fs, &root);
+
+		if(EFI_ERROR(res)) {
+			continue;
+		}
+
+		EFI_FILE_PROTOCOL* token = NULL;
+		res = root->Open(root, &token, L"\\vminix", EFI_FILE_MODE_READ, 0);
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not open file! \n");
+			continue;
+		} else {
+			Print(L"Opened the file!\n");
+		}
+
+		UINTN amt = MAX_IMAGE_SIZE;
+		res = token->Read(token, &amt, (void*)buffer);
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not read file! \n");
+		}
+
+		Print(L"Bytes read: %d\n", amt);
+
+		boot->FreePool(buffer);
+		res = boot->AllocatePool(EfiLoaderData, amt, (void**)(&buffer));
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not reallocate buffer! \n");
+		}
+
+		token->SetPosition(token, 0);
+		res = token->Read(token, &amt, (void*)buffer);
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not read file! \n");
+		}
+
+		Print(L"MAGIC: %c%c%c\n", buffer[1], buffer[2], buffer[3]);
+		elf64_header_t* elf = (elf64_header_t*)buffer;
+
+		Print(L"PH NUM: %d\n", elf->e_phnum);
+
+		elf64_pheader_t* loadable;
+		int l_pos = 0;
+
+		boot->AllocatePool(EfiLoaderData, sizeof(elf64_pheader_t) * elf->e_phnum, (void**)&loadable);
+
+		for(int i = 0; i < elf->e_phnum; i++) {
+			elf64_pheader_t* ph = (elf64_pheader_t*)(&buffer[elf->e_phoff + i * elf->e_phentsize]);
+
+			if(ph->p_type != PT_LOAD)
+				continue;
+
+			Print(L"Found loadable segment\n");
+			loadable[l_pos++] = *ph;
+		}
+
+		if(l_pos == 0) {
+			Print(L"No loadable segments found!\n");
+			return EFI_SUCCESS;
+		}
+
+		int sz;
+
+		if(l_pos == 1) {
+			sz = loadable[0].p_memsz;
+		} else {
+			sz = (loadable[l_pos - 1].p_vaddr + loadable[l_pos - 1].p_memsz) - loadable[0].p_vaddr;
+		}
+
+		// Calculate number of pages -- rounding up
+		int pages = (sz + 0x1000 - 1) / 0x1000;
+		Print(L"Number of pages required: %d\n", pages);
+
+		char* kernel_img;
+		res = boot->AllocatePages(AllocateAnyPages, EfiRuntimeServicesCode, pages, (EFI_PHYSICAL_ADDRESS*) &kernel_img);
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not allocate pages!\n");
+			return EFI_SUCCESS;
+		}
+
+		// Copy the segments into the in-memory images
+		for(int i = 0; i < l_pos; i++) {
+			boot->CopyMem((void*)&kernel_img[loadable[i].p_vaddr - loadable[0].p_vaddr], (void*)&buffer[loadable[i].p_offset], loadable[i].p_filesz);
+			boot->SetMem((void*)&kernel_img[loadable[i].p_vaddr - loadable[0].p_vaddr + loadable[i].p_filesz], loadable[i].p_memsz - loadable[i].p_filesz, 0);
+		}
+
+		unsigned long jmp_point = (elf->e_entry - loadable[0].p_vaddr) + (unsigned long)kernel_img;
+
+		Print(L"Initialised kernel image: entry point: %llx\n", jmp_point);
+		Print(L"Booting.....\n");
+
+		// FIXME: pass kernel params and the function to ExitBootServices
+		typedef void kernel_entry(void);
+		((kernel_entry*)jmp_point)();
+	}
 
 	return EFI_SUCCESS;
 }
