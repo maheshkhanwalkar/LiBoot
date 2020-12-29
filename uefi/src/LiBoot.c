@@ -41,15 +41,20 @@ typedef struct elf64_header {
 } elf64_header_t;
 
 typedef struct elf64_pheader {
-	unsigned int p_type;
-	unsigned int p_flags;
-	unsigned long p_offset;
-	unsigned long p_vaddr;
-	unsigned long p_paddr;
-	unsigned long p_filesz;
-	unsigned long p_memsz;
-	unsigned long p_align;
+    unsigned int p_type;
+    unsigned int p_flags;
+    unsigned long p_offset;
+    unsigned long p_vaddr;
+    unsigned long p_paddr;
+    unsigned long p_filesz;
+    unsigned long p_memsz;
+    unsigned long p_align;
 } elf64_pheader_t;
+
+typedef struct entry {
+	unsigned long count;
+	void* entries;
+} entry_t;
 
 
 EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys_table)
@@ -83,7 +88,6 @@ EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 
 	Print(L"\n");
 	EFI_BOOT_SERVICES* boot = sys_table->BootServices;
-	//EFI_RUNTIME_SERVICES* run_serv = sys_table->RuntimeServices;
 
 	EFI_GUID sfs_guid = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_GUID;
 	UINTN fs_num;
@@ -168,7 +172,7 @@ EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 			if(ph->p_type != PT_LOAD)
 				continue;
 
-			Print(L"Found loadable segment\n");
+			Print(L"Found loadable segment, p_flags: %lu\n", ph->p_flags);
 			loadable[l_pos++] = *ph;
 		}
 
@@ -208,9 +212,48 @@ EFI_STATUS EFIAPI uefi_main(IN EFI_HANDLE image_handle, IN EFI_SYSTEM_TABLE *sys
 		Print(L"Initialised kernel image: entry point: %llx\n", jmp_point);
 		Print(L"Booting.....\n");
 
-		// FIXME: pass kernel params and the function to ExitBootServices
-		typedef void kernel_entry(void);
-		((kernel_entry*)jmp_point)();
+		// Cleanup stuff that's no longer needed
+		boot->FreePool(buffer);
+
+		// Allocate kernel args
+		entry_t* img_ent, *map_ent;
+
+		boot->AllocatePool(EfiLoaderData, sizeof(*img_ent), (void**)(&img_ent));
+		boot->AllocatePool(EfiLoaderData, sizeof(*map_ent), (void**)(&map_ent));
+
+		img_ent->count = l_pos;
+		img_ent->entries = (void*)loadable;
+
+		// Determine how big the memory map is
+		UINTN map_sz = 0, map_key = 0, desc_sz;
+		EFI_MEMORY_DESCRIPTOR* map = NULL;
+		boot->GetMemoryMap(&map_sz, map, NULL, &desc_sz, NULL);
+
+		// Safety: in case the allocate pool somehow splits two memory map segments
+		map_sz += desc_sz * 2;
+		boot->AllocatePool(EfiLoaderData, map_sz, (void**)(&map));
+
+		// Get the memory map
+		UINT32 desc_ver;
+		res = boot->GetMemoryMap(&map_sz, map, &map_key, &desc_sz, &desc_ver);
+
+		map_ent->count = map_sz / desc_sz;
+		map_ent->entries = map;
+
+		// Disable watchdog timer
+		boot->SetWatchdogTimer(0, 0, 0, NULL);
+
+		// Exit boot services
+		res = boot->ExitBootServices(image_handle, map_key);
+
+		if(EFI_ERROR(res)) {
+			Print(L"Could not exit boot services!\n");
+			return EFI_SUCCESS;
+		}
+
+		// Jump into the kernel
+		typedef void kernel_entry(unsigned long magic, unsigned long kern_base, void* kern_img, void* map);
+		((kernel_entry*)jmp_point)(0xEF1B001, (unsigned long)kernel_img, (void*)img_ent, (void*)map_ent);
 	}
 
 	return EFI_SUCCESS;
